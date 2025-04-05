@@ -8,7 +8,7 @@ import jieba
 import joblib
 
 # Load data from CSV
-data_path = "data/test.csv"
+data_path = "../data/test.csv"
 df = pd.read_csv(data_path)
 
 # Define aspect categories
