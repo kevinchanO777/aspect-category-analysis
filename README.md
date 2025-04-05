@@ -1,3 +1,6 @@
+### Install dependency
+```pip install -r model/requirements.txt```
+
 # TODO List
 
 - [ ] Import train, dev, test dataset
