@@ -5,3 +5,5 @@ jieba>=0.42.1
 joblib>=1.2.0
 matplotlib>=3.10.1
 seaborn>=0.13.2
+# Vscode jupyter extension requires ipykernel to be installed
+ipykernel>=6.29.5
