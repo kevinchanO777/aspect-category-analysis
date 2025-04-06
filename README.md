@@ -1,9 +1,6 @@
-### Install dependency
-```pip install -r model/requirements.txt```
-
 # TODO List
 
-- [ ] Import train, dev, test dataset
+- [x] Import train, dev, test dataset
 - [ ] Investigate and address the issue causing 0% accuracy in some aspect.
 - [ ] Improve data pre-processing to enhance model performance.
 - [ ] Explore Tencent Chinese word embeddings for potential improvements.

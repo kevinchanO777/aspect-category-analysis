@@ -7,3 +7,5 @@ matplotlib>=3.10.1
 seaborn>=0.13.2
 # Vscode jupyter extension requires ipykernel to be installed
 ipykernel>=6.29.5
+# Linter
+ruff>=0.11.4
