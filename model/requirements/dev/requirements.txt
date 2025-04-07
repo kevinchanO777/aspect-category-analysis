@@ -6,6 +6,7 @@ joblib>=1.2.0
 matplotlib>=3.10.1
 seaborn>=0.13.2
 transformers>=4.51.0
+torch>=2.6.0
 logging>=0.4.9.6
 
 ########### Development dependencies ###########
