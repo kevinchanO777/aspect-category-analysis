@@ -1,11 +1,9 @@
 # TODO List
 
 - [x] Import train, dev, test dataset
-- [ ] Data preprocessing - Remove stop word, punctuation (if needed, sometimes it's better to keep the ! and ?)
-- [ ] Use vanilla BERT
-- [ ] Explore Tencent Chinese word embeddings.
+- [ ] More data preprocessing - Remove stop word, punctuation (if needed, sometimes it's better to keep the ! and ?)
+- [x] Use vanilla BERT
+- [ ] Linear SVC with word embedding 
 - [ ] Make a simple web app with FastAPI and host it.
-- [ ] Experiment different models, SVC, BERT (no need word embedding), LSTM, ACSA model from Hugging Face.
-- [ ] Investigate and address the issue causing 0% accuracy in some aspect.
-- [ ] Improve data pre-processing to enhance model performance.
+- [ ] Overall sentiment anaylysis (1-5 star)
 - [ ] Translate the Chinese dataset into English to make it support English review

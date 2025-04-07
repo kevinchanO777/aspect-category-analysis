@@ -7,7 +7,6 @@ matplotlib>=3.10.1
 seaborn>=0.13.2
 transformers==4.49.0 # https://github.com/opendatalab/MinerU/issues/2112
 torch>=2.6.0
-logging>=0.4.9.6
 tqdm>=4.67.1
 
 ########### Development dependencies ###########
