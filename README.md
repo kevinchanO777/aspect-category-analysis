@@ -1,7 +1,7 @@
 # TODO List
 
 - [x] Import train, dev, test dataset
-- [ ] Data preprocessing - Remove stop word
+- [ ] Data preprocessing - Remove stop word, punctuation (if needed, sometimes it's better to keep the ! and ?)
 - [ ] Use vanilla BERT
 - [ ] Explore Tencent Chinese word embeddings.
 - [ ] Make a simple web app with FastAPI and host it.
