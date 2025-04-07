@@ -2,42 +2,21 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import LinearSVC
 from sklearn.metrics import classification_report
 import jieba
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
 import joblib
-
-# Load data from CSV
-data_path = "../data/test.csv"
-df = pd.read_csv(data_path)
-
-# Define aspect categories
-aspect_columns = [col for col in df.columns if col not in ["id", "review", "star"]]
+import transformers
+import torch
 
 
-# Text preprocessing with Chinese segmentation
 def preprocess_text(text):
     words = jieba.cut(text)
     return " ".join(words)
 
 
-# Prepare features
-df["processed_review"] = df["review"].apply(preprocess_text)
-
-# Inspect processed_review
-print("\nProcessed reviews (first 3 samples):")
-for i in range(min(3, len(df))):
-    print(f"\nRow {i}:")
-    print(f"Original: {df['review'].iloc[i]}")
-    print(f"Processed: {df['processed_review'].iloc[i]}")
-
-X = df["processed_review"]
-
-# Prepare target variables - Keep as DataFrame
-y = df[aspect_columns].astype("object")
-
-
-# Convert sentiment scores to categorical labels
 def convert_sentiment(score):
     if score == -2:
         return "not_mentioned"
@@ -45,82 +24,92 @@ def convert_sentiment(score):
         return "negative"
     elif score == 0:
         return "neutral"
-    elif score == 1:
+    else:  # score == 1
         return "positive"
 
 
-# Apply conversion to each column with .loc
-for col in y.columns:
-    y.loc[:, col] = y[col].apply(convert_sentiment)
+def load_and_preprocess_data(file_path):
+    df = pd.read_csv(file_path)
 
-# Text vectorization
-tfidf = TfidfVectorizer(max_features=5000)
-X_tfidf = tfidf.fit_transform(X)
+    # Define aspects, e.g. Food#Appearance, Service#Price, etc.
+    aspect_columns = [col for col in df.columns if col not in ["id", "review", "star"]]
+    y = df[aspect_columns]
 
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(
-    X_tfidf, y, test_size=0.2, random_state=42
-)
+    # Convert sentiment scores to categorical labels
+    y = df[aspect_columns].astype("object")
+    for col in y.columns:
+        y.loc[:, col] = y[col].apply(convert_sentiment)
 
-# Verify shapes
-print(f"\nX_train shape: {X_train.shape}")
-print(f"y_train shape: {y_train.shape}")
-print(f"X_test shape: {X_test.shape}")
-print(f"y_test shape: {y_test.shape}")
+    # Data preprocessing
+    df["processed_review"] = df["review"].apply(preprocess_text)
 
-# Train model for each aspect with class checking
-classifiers = {}
-for aspect in aspect_columns:
-    unique_classes = y_train[aspect].nunique()
-    if unique_classes < 2:
-        print(
-            f"Skipping {aspect}: only one class ({y_train[aspect].iloc[0]}) in training data"
+    return df["processed_review"], y, aspect_columns
+
+
+train_path = "../data/train.csv"
+dev_path = "../data/dev.csv"
+test_path = "../data/test.csv"
+
+X_train, y_train, aspect_columns = load_and_preprocess_data(train_path)
+X_dev, y_dev, _ = load_and_preprocess_data(dev_path)
+X_test, y_test, _ = load_and_preprocess_data(test_path)
+
+
+######### Train BERT #########
+
+from transformers import BertModel, BertTokenizer
+import torch
+from sklearn.svm import LinearSVC
+from sklearn.metrics import classification_report
+import numpy as np
+import joblib
+from tqdm import tqdm  # Import tqdm for progress bar
+
+# Ensure the model is in evaluation mode and move to GPU if available
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = BertModel.from_pretrained("bert-base-chinese").to(device)
+model.eval()  # Set to evaluation mode since we're only extracting embeddings
+tokenizer = BertTokenizer.from_pretrained("bert-base-chinese")
+
+
+# Step 1: Define a function to generate BERT embeddings with a progress bar
+def get_bert_embeddings(texts, batch_size=32):
+    embeddings = []
+    num_batches = (len(texts) + batch_size - 1) // batch_size
+
+    # Use tqdm to show a progress bar for the batches
+    for i in tqdm(
+        range(0, len(texts), batch_size),
+        total=num_batches,
+        desc="Generating BERT embeddings",
+    ):
+        batch_texts = texts[i : i + batch_size]
+
+        # Tokenize the batch
+        inputs = tokenizer(
+            batch_texts.tolist(),
+            padding="max_length",
+            truncation=True,
+            max_length=512,  # BERT's max input length
+            return_tensors="pt",  # Return PyTorch tensors
+            add_special_tokens=True,
         )
-        classifiers[aspect] = None
-    else:
-        clf = LinearSVC(random_state=42)
-        clf.fit(X_train, y_train[aspect])
-        classifiers[aspect] = clf
 
-# Evaluation
-print("\nModel Evaluation:")
-for aspect in aspect_columns:
-    if classifiers[aspect] is not None:
-        y_pred = classifiers[aspect].predict(X_test)
-        y_true = y_test[aspect]
-        print(f"\n{aspect}:")
-        print(classification_report(y_true, y_pred))
-    else:
-        print(f"\n{aspect}: No model trained (single class in training data)")
+        # Move inputs to the device (CPU/GPU)
+        inputs = {key: val.to(device) for key, val in inputs.items()}
 
+        # Get BERT embeddings (no gradient computation to save memory)
+        with torch.no_grad():
+            outputs = model(**inputs)
+            # Use the [CLS] token embedding (first token) as the review embedding
+            cls_embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
 
-# Function to predict sentiments for new review
-def predict_sentiments(review_text):
-    processed_text = preprocess_text(review_text)
-    text_tfidf = tfidf.transform([processed_text])
+        embeddings.append(cls_embeddings)
 
-    predictions = {}
-    for aspect, clf in classifiers.items():
-        if clf is None:
-            predictions[aspect] = "not_mentioned"  # Default for single-class aspects
-        else:
-            pred = clf.predict(text_tfidf)[0]
-            predictions[aspect] = pred
-
-    return predictions
+    # Concatenate all batch embeddings
+    embeddings = np.concatenate(embeddings, axis=0)
+    return embeddings
 
 
-# Example prediction
-new_review = (
-    "这家餐厅环境很好，服务态度也不错，菜品味道很棒，就是价格有点贵，停车不太方便。"
-)
-predictions = predict_sentiments(new_review)
-print("\nPredictions for new review:")
-for aspect, sentiment in predictions.items():
-    print(f"{aspect}: {sentiment}")
-
-# # Save the model
-# joblib.dump(tfidf, 'tfidf_vectorizer.pkl')
-# for aspect, clf in classifiers.items():
-#     if clf is not None:
-#         joblib.dump(clf, f'classifier_{aspect}.pkl')
+print("Generating BERT embeddings for dev data...")
+X_dev_bert = get_bert_embeddings(X_dev, batch_size=32)
