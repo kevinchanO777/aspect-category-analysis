@@ -11,5 +11,6 @@ logging>=0.4.9.6
 
 ########### Development dependencies ###########
 
+ipywidgets>=8.1.5
 ipykernel>=6.29.5
 pre-commit>=4.2.0
