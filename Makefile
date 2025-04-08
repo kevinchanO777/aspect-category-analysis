@@ -6,6 +6,8 @@ APP = app.app:app
 HOST = 0.0.0.0
 PORT = 8000
 REQUIREMENTS_DEV = requirements/dev/requirements.txt
+BUCKET=bert_asap_model
+OBJECT=bert_multitask_model.pth
 
 # Install dependencies
 .PHONY: install
@@ -15,7 +17,10 @@ install:
 # Pull model from Hugging Face (placeholder)
 .PHONY: pull-model
 pull-model:
-	@echo "Pulling model from Hugging Face... (TBD)"
+	@echo "Pulling model from GCP storage..."
+	curl -X GET \
+		-o model/bert_multitask_model.pth \
+		"https://storage.googleapis.com/storage/v1/b/${BUCKET}/o/${OBJECT}?alt=media"
 
 # Run in development mode
 .PHONY: run-dev
