@@ -1,6 +1,3 @@
-# Build FastAPI here
-
-#### Load trained model ####
 import torch
 from transformers import BertTokenizer, BertModel
 
