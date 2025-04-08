@@ -1,12 +1,28 @@
-.Phony: deps
-deps:
-	pip install -r requirements/dev/requirements.txt
+# Variables
+PYTHON = python3
+PIP = pip3
+UVICORN = uvicorn
+APP = app:app
+HOST = 0.0.0.0
+PORT = 8000
+REQUIREMENTS_DEV = requirements/dev/requirements.txt
 
-# TBD
-.Phony: pull-model
+# Install dependencies
+.PHONY: install
+install:
+	$(PIP) install -r $(REQUIREMENTS_DEV)
+
+# Pull model from Hugging Face (placeholder)
+.PHONY: pull-model
 pull-model:
-	echo "Pulling model from Hugging Face..."
+	@echo "Pulling model from Hugging Face... (TBD)"
 
-.Phony: run-app
-run-app:
-	uvicorn app/main.py:app --reload
+# Run in development mode
+.PHONY: run-dev
+run-dev:
+	$(UVICORN) $(APP) --host $(HOST) --port $(PORT) --reload
+
+# Run in production mode
+.PHONY: run-prod
+run-prod:
+	$(UVICORN) $(APP) --host $(HOST) --port $(PORT)
