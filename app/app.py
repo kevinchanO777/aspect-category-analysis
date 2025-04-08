@@ -1,13 +1,18 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from schemas import ReviewInput
-from model import MultiTaskSentimentModel
+from .schemas import ReviewInput
+from .model import MultiTaskSentimentModel
 import uvicorn
 
 app = FastAPI()
 
 # Initialize the trained BERT model
 sentiment_model = MultiTaskSentimentModel()
+
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the Multi-task Sentiment Analysis API!"}
 
 
 @app.post("/predict/")
