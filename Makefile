@@ -32,11 +32,12 @@ run-dev:
 run-prod:
 	$(UVICORN) $(APP) --host $(HOST) --port $(PORT)
 
+# The food is excellent and the service is attentive. However, the restaurant is hard to find, and the cleanliness is not so good.
 .PHONY: demo
 demo:
 	curl -sX POST http://localhost:8000/predict/ \
 	-H "Content-Type: application/json" \
-	-d '{"review": "这家餐厅的食物非常好，服务也很周到。"}'
+	-d '{"review": "这家餐厅的食物非常好，服务也很周到。不过，餐厅很难找到，卫生状况也不是很好。"}' | jq 
 
 # Clean up
 .PHONY: clean
