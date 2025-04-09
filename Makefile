@@ -32,6 +32,12 @@ run-dev:
 run-prod:
 	$(UVICORN) $(APP) --host $(HOST) --port $(PORT)
 
+.PHONY: demo
+demo:
+	curl -sX POST http://localhost:8000/predict/ \
+	-H "Content-Type: application/json" \
+	-d '{"review": "这家餐厅的食物非常好，服务也很周到。"}'
+
 # Clean up
 .PHONY: clean
 clean:
